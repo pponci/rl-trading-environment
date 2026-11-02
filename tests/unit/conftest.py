@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from rl_env.components.config import TradingEnvConfig
 from rl_env.trading_env import TradingEnv
 
 
@@ -21,6 +22,8 @@ def simple_env(simple_df: pd.DataFrame) -> TradingEnv:
     Simple Enviroment.
     """
 
-    env = TradingEnv(df=simple_df, window_size=2)
+    cfg = TradingEnvConfig(window_size=2)
+
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     return env

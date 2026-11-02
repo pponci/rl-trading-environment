@@ -4,18 +4,11 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 
+from rl_env.components.config import TradingEnvConfig
+
 
 class TradingEnv(gym.Env):
-    def __init__(
-        self,
-        df: pd.DataFrame,
-        window_size: int = 30,
-        initial_balance: float = 10_000.00,
-        commission: float = 0.001,
-        slippage: float = 0.0005,
-        position_size: float = 0.20,
-        invalid_action_penalty: float = -10.0,
-    ) -> None:
+    def __init__(self, df: pd.DataFrame, cfg: TradingEnvConfig) -> None:
 
         super().__init__()
 
@@ -25,33 +18,36 @@ class TradingEnv(gym.Env):
         if "close" not in df.columns:
             raise ValueError("close column is required.")
 
-        if window_size >= len(df):
+        if cfg.window_size >= len(df):
             raise ValueError(
-                f"window_size : {window_size} musst be a smaller number than",
+                f"window_size : {cfg.window_size} musst be a smaller number than",
                 f"the lenght of the dataset : {len(df)}",
             )
 
         self.df = df.reset_index(drop=True)
-        self.window_size = window_size
+        self.window_size = cfg.window_size
         self.prices = df["close"].to_numpy(dtype=np.float32)
 
         if not np.all(np.isfinite(self.prices)) or np.any(self.prices <= 0):
             raise ValueError("invalid prices present in the dataset")
 
-        self.commission = commission
-        self.slippage = slippage
-        self.postion_open_value = initial_balance * position_size
+        self.commission = cfg.commission
+        self.slippage = cfg.slippage
+        self.postion_open_value = cfg.initial_balance * cfg.position_size
 
-        self.initial_balance = initial_balance
+        self.initial_balance = cfg.initial_balance
         n_portfolio_features = 3
 
         self.observation_space = gym.spaces.Box(
-            low=-np.inf, high=np.inf, shape=(window_size + n_portfolio_features,), dtype=np.float32
+            low=-np.inf,
+            high=np.inf,
+            shape=(cfg.window_size + n_portfolio_features,),
+            dtype=np.float32,
         )
 
         self.action_space = gym.spaces.Discrete(3)
 
-        self.invalid_action_penalty = invalid_action_penalty
+        self.invalid_action_penalty = cfg.invalid_action_penalty
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None

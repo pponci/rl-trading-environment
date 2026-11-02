@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rl_env.components.config import TradingEnvConfig
 from rl_env.trading_env import TradingEnv
 
 
@@ -28,7 +29,9 @@ def test_each_step_advances_one_timestep(simple_env: TradingEnv) -> None:
 def test_minimum_dataset_length_supports_one_transition() -> None:
     window_size = 3
     data = [90, 95, 98, 100]
-    env = TradingEnv(df=pd.DataFrame({"close": data}), window_size=window_size)
+
+    cfg = TradingEnvConfig(window_size=window_size)
+    env = TradingEnv(df=pd.DataFrame({"close": data}), cfg=cfg)
 
     env.reset()
     obs, _, terminated, truncated, _ = env.step(0)
@@ -41,8 +44,10 @@ def test_minimum_dataset_length_supports_one_transition() -> None:
 
 def test_dataset_with_no_transition_is_rejected() -> None:
     data = [90, 95, 98, 100]
+    cfg = TradingEnvConfig(window_size=4)
+
     with pytest.raises(ValueError):
-        TradingEnv(df=pd.DataFrame({"close": data}), window_size=4)
+        TradingEnv(df=pd.DataFrame({"close": data}), cfg=cfg)
 
 
 def test_reset_after_termination(simple_env: TradingEnv) -> None:

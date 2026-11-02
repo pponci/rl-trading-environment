@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from gymnasium.spaces import Box, Discrete
 
+from rl_env.components.config import TradingEnvConfig
 from rl_env.trading_env import TradingEnv
 
 
@@ -53,41 +54,47 @@ def test_prices_type_and_dtype(simple_env: TradingEnv) -> None:
 
 def test_no_close_column() -> None:
     df = pd.DataFrame({"ref_close": [100, 101, 102, 99]})
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="close column"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
 
 
 def test_NaN_price() -> None:
     df = pd.DataFrame({"close": [100, 99, np.nan]})
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="invalid prices"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
 
 
 def test_inf_price() -> None:
     df = pd.DataFrame({"close": [100, 99, np.inf]})
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="invalid prices"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
 
 
 def test_negative_price() -> None:
     df = pd.DataFrame({"close": [100, 99, -11]})
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="invalid prices"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
 
 
 def test_zero_price() -> None:
     df = pd.DataFrame({"close": [100, 99, 0]})
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="invalid prices"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
 
 
 def test_empty_dataframe() -> None:
     df = pd.DataFrame()
+    cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="dataframe cannot be empty"):
-        TradingEnv(df=df, window_size=1)
+        TradingEnv(df=df, cfg=cfg)
