@@ -11,3 +11,19 @@ class TradingEnvConfig:
     position_size: float = 0.20
 
     invalid_action_penalty: float = -10.0
+
+    def __post_init__(self) -> None:
+        if self.window_size <= 0:
+            raise ValueError("window_size must be > 0")
+
+        if self.initial_balance <= 0:
+            raise ValueError("initial_balance must be > 0")
+
+        if not (0.0 <= self.commission <= 1.0):
+            raise ValueError("commission must be a percentage")
+
+        if not (0.0 <= self.slippage <= 1.0):
+            raise ValueError("slippage must be a percentage")
+
+        if not (0.0 <= self.position_size <= 1.0):
+            raise ValueError("position_size must be a percentage")
