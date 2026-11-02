@@ -1,15 +1,20 @@
 import pandas as pd
 import pytest
 
+from rl_env.components.config import TradingEnvConfig
 from rl_env.trading_env import TradingEnv
 
 
 def test_buy_without_costs(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(
-        df=simple_df,
+    cfg = TradingEnvConfig(
         commission=0.0,
         slippage=0.0,
         window_size=2,
+    )
+
+    env = TradingEnv(
+        df=simple_df,
+        cfg=cfg,
     )
 
     env.reset()
@@ -21,7 +26,13 @@ def test_buy_without_costs(simple_df: pd.DataFrame) -> None:
 
 
 def test_buy_with_commission(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(df=simple_df, commission=0.001, slippage=0.0, window_size=2)
+    cfg = TradingEnvConfig(
+        commission=0.001,
+        slippage=0.0,
+        window_size=2,
+    )
+
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.step(1)
@@ -34,12 +45,12 @@ def test_buy_with_commission(simple_df: pd.DataFrame) -> None:
 
 
 def test_buy_with_slippage(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(
-        df=simple_df,
+    cfg = TradingEnvConfig(
         commission=0.0,
         slippage=0.001,
         window_size=2,
     )
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.step(1)
@@ -52,7 +63,8 @@ def test_buy_with_slippage(simple_df: pd.DataFrame) -> None:
 
 
 def test_buy_with_commission_and_slippage(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(df=simple_df, commission=0.001, slippage=0.001, window_size=2)
+    cfg = TradingEnvConfig(commission=0.001, slippage=0.001, window_size=2)
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.step(1)
@@ -65,12 +77,12 @@ def test_buy_with_commission_and_slippage(simple_df: pd.DataFrame) -> None:
 
 
 def test_unaffordable_buy_does_not_change_portfolio(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(
-        df=simple_df,
+    cfg = TradingEnvConfig(
         initial_balance=1000.0,
         position_size=0.20,
         window_size=2,
     )
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.balance = 100.0
@@ -99,12 +111,12 @@ def test_buy_while_holding_is_rejected(simple_env: TradingEnv) -> None:
 
 
 def test_sell_without_costs(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(
-        df=simple_df,
+    cfg = TradingEnvConfig(
         commission=0.0,
         slippage=0.0,
         window_size=2,
     )
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.step(1)
@@ -117,11 +129,15 @@ def test_sell_without_costs(simple_df: pd.DataFrame) -> None:
 
 def test_sell_with_commission(simple_df: pd.DataFrame) -> None:
     commission = 0.001
-    env = TradingEnv(
-        df=simple_df,
+
+    cfg = TradingEnvConfig(
         commission=commission,
         slippage=0.0,
         window_size=2,
+    )
+    env = TradingEnv(
+        df=simple_df,
+        cfg=cfg,
     )
 
     env.reset()
@@ -138,12 +154,14 @@ def test_sell_with_commission(simple_df: pd.DataFrame) -> None:
 
 def test_sell_with_slippage(simple_df: pd.DataFrame) -> None:
     slippage = 0.001
-    env = TradingEnv(
-        df=simple_df,
+
+    cfg = TradingEnvConfig(
         commission=0.0,
         slippage=slippage,
         window_size=2,
     )
+
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     env.reset()
     env.step(1)

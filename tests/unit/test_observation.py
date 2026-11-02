@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rl_env.components.config import TradingEnvConfig
 from rl_env.trading_env import TradingEnv
 
 
@@ -19,12 +20,15 @@ def test_obs_dtype(simple_env: TradingEnv) -> None:
 
 
 def test_too_large_window_size(simple_df: pd.DataFrame) -> None:
+    cfg = TradingEnvConfig(window_size=9)
+
     with pytest.raises(ValueError, match="window_size"):
-        TradingEnv(df=simple_df, window_size=9)
+        TradingEnv(df=simple_df, cfg=cfg)
 
 
 def test_window_size_plus_one(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(df=simple_df, window_size=8)
+    cfg = TradingEnvConfig(window_size=8)
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     obs, info = env.reset()
     obs, reward, terminated, truncated, info = env.step(0)
@@ -34,7 +38,8 @@ def test_window_size_plus_one(simple_df: pd.DataFrame) -> None:
 
 
 def test_window_size_plus_two(simple_df: pd.DataFrame) -> None:
-    env = TradingEnv(df=simple_df, window_size=7)
+    cfg = TradingEnvConfig(window_size=7)
+    env = TradingEnv(df=simple_df, cfg=cfg)
 
     obs, info = env.reset()
     obs, reward, terminated, truncated, info = env.step(0)
