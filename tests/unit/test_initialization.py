@@ -20,10 +20,10 @@ def test_action_observation_shape(simple_env: TradingEnv) -> None:
 def test_balance_and_share_values(simple_env: TradingEnv) -> None:
     obs, info = simple_env.reset()
 
-    assert simple_env.balance == 10_000.0
-    assert simple_env.initial_balance == 10_000.0
-    assert simple_env.prev_balance == 10_000.0
-    assert simple_env.shares_held == 0.0
+    assert simple_env.portfolio.balance == 10_000.0
+    assert simple_env.cfg.initial_balance == 10_000.0
+    assert simple_env.portfolio.prev_balance == 10_000.0
+    assert simple_env.portfolio.shares_held == 0.0
 
 
 def test_commission_and_slippage_values(simple_env: TradingEnv) -> None:
