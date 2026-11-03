@@ -55,7 +55,7 @@ class TradingEnv(gym.Env):
         Build the observation from the enviroment.
         """
 
-        window = self.market_data.get_window(step=current_step)
+        window = self.market_data.get_scaled_window(step=current_step)
 
         price = self.market_data.get_current_price(current_step)
         position_value = self.portfolio.get_position_value(price=price)

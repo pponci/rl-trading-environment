@@ -80,6 +80,18 @@ class MarketData:
 
         return self.prices[step - self.cfg.window_size : step]
 
+    def get_scaled_window(self, step: int) -> np.ndarray:
+        """
+        Calculate normalized price window for current step.
+        """
+
+        window = self.get_window(step=step)
+
+        if window[-1] == 0:
+            return np.zeros(self.cfg.window_size)
+
+        return window / window[-1] - 1
+
     def finished(self, step: int) -> bool:
         """
         Check if dataset is finished.
