@@ -4,6 +4,7 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 
+from rl_env.components.broker import Broker
 from rl_env.components.config import TradingEnvConfig
 from rl_env.components.market_data import MarketData
 from rl_env.components.portfolio import Portfolio
@@ -17,10 +18,7 @@ class TradingEnv(gym.Env):
         self.cfg = cfg
         self.portfolio = Portfolio(cfg=cfg)
         self.market_data = MarketData(df=df, cfg=cfg)
-
-        self.commission = cfg.commission
-        self.slippage = cfg.slippage
-        self.postion_open_value = cfg.initial_balance * cfg.position_size
+        self.broker = Broker(cfg=cfg, portfolio=self.portfolio)
 
         n_portfolio_features = 3
 
@@ -66,34 +64,6 @@ class TradingEnv(gym.Env):
 
         return np.concatenate([window, portfolio_features]).astype(np.float32)
 
-    def _buy(self, price: float) -> bool:
-        """
-        Open postion if possible, return the status.
-        """
-
-        fill_price = price * (1 + self.slippage)
-
-        n_shares = self.postion_open_value / (fill_price * (1 + self.commission))
-
-        total_cost = n_shares * fill_price * (1 + self.commission)
-
-        buy_status = self.portfolio.open_position(n_shares=n_shares, total_cost=total_cost)
-
-        return buy_status
-
-    def _sell(self, price: float) -> None:
-        """
-        Close postion.
-        """
-
-        fill_price = price * (1 - self.slippage)
-        gross_proceeds = self.portfolio.shares_held * fill_price
-        commission_cost = gross_proceeds * self.commission
-
-        total_proceeds = gross_proceeds - commission_cost
-
-        self.portfolio.close_position(total_proceeds=total_proceeds)
-
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         """
         Exections required for each step.
@@ -110,23 +80,19 @@ class TradingEnv(gym.Env):
             reward = 0.0
 
         elif action == 1:
-            if not self.portfolio.in_position():
-                buy_status = self._buy(price=price)
+            buy_status = self.broker.execute_buy(price=price)
 
-                if buy_status:
-                    reward = 0.0
-
-                else:
-                    reward = self.invalid_action_penalty
+            if buy_status:
+                reward = 0.0
 
             else:
                 reward = self.invalid_action_penalty
 
         elif action == 2:
-            if self.portfolio.in_position():
-                self._sell(price=price)
-                reward = self.portfolio.get_percentage_return()
+            sell_status = self.broker.execute_sell(price=price)
 
+            if sell_status:
+                reward = self.portfolio.get_percentage_return()
                 self.portfolio.update_prev_portfolio_balance()
 
             else:

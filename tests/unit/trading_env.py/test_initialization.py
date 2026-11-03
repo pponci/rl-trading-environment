@@ -30,14 +30,14 @@ def test_balance_and_share_values(simple_env: TradingEnv) -> None:
 def test_commission_and_slippage_values(simple_env: TradingEnv) -> None:
     obs, info = simple_env.reset()
 
-    assert simple_env.commission == 0.001
-    assert simple_env.slippage == 0.0005
+    assert simple_env.cfg.commission == 0.001
+    assert simple_env.cfg.slippage == 0.0005
 
 
 def test_position_open_value(simple_env: TradingEnv) -> None:
     obs, info = simple_env.reset()
 
-    assert simple_env.postion_open_value == 2000.0
+    assert simple_env.broker.position_open_value == 2000.0
 
 
 def test_invalid_action_penalty_value(simple_env: TradingEnv) -> None:
