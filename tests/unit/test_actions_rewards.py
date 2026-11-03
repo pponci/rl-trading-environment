@@ -36,7 +36,7 @@ def test_profitable_sale_reward(simple_env: TradingEnv) -> None:
     simple_env.step(1)
     _, reward, _, _, _ = simple_env.step(2)
 
-    assert reward == pytest.approx(33.88867, rel=1e-4)
+    assert reward == pytest.approx(0.3389, rel=1e-4)
     assert simple_env.portfolio.prev_balance == pytest.approx(10_033.890, rel=1e-4)
 
 
@@ -47,7 +47,7 @@ def test_losing_sale_reward(simple_env: TradingEnv) -> None:
     simple_env.step(0)
     _, reward, _, _, _ = simple_env.step(2)
 
-    assert reward == pytest.approx(-105.69141, rel=1e-4)
+    assert reward == pytest.approx(-1.0569141, rel=1e-4)
     assert simple_env.portfolio.balance == pytest.approx(9_894.3086, rel=1e-4)
     assert simple_env.portfolio.prev_balance == pytest.approx(9_894.3086, rel=1e-4)
 
@@ -58,12 +58,12 @@ def test_rewards_for_two_completed_trades(simple_env: TradingEnv) -> None:
     simple_env.step(1)
     _, reward_1, _, _, _ = simple_env.step(2)
 
-    assert reward_1 == pytest.approx(33.88867, rel=1e-4)
+    assert reward_1 == pytest.approx(0.3388867, rel=1e-4)
 
     simple_env.step(1)
     _, reward_2, _, _, _ = simple_env.step(2)
 
-    assert reward_2 == pytest.approx(-105.69141, rel=1e-4)
+    assert reward_2 == pytest.approx(-1.05334, rel=1e-4)
 
 
 @pytest.mark.parametrize("action", [2])
@@ -88,7 +88,7 @@ def test_buy_hold_sell_sequence(simple_env: TradingEnv) -> None:
 
     _, sell_reward, _, _, _ = simple_env.step(2)
 
-    assert sell_reward == pytest.approx(-5.99121, rel=1e-3)
+    assert sell_reward == pytest.approx(-0.0599121, rel=1e-3)
     assert simple_env.portfolio.shares_held == pytest.approx(0.0)
 
 
@@ -117,12 +117,12 @@ def test_sell_buy_sell_sequence(simple_env: TradingEnv) -> None:
 
     simple_env.step(1)
     _, first_sell_reward, _, _, _ = simple_env.step(2)
-    assert first_sell_reward == pytest.approx(-45.08984, rel=1e-3)
+    assert first_sell_reward == pytest.approx(-0.4508984, rel=1e-3)
 
     simple_env.step(1)
     _, second_sell_reward, _, _, _ = simple_env.step(2)
 
-    assert second_sell_reward == pytest.approx(14.998, rel=1e-3)
+    assert second_sell_reward == pytest.approx(0.1506, rel=1e-3)
     assert simple_env.portfolio.shares_held == pytest.approx(0.0)
 
 

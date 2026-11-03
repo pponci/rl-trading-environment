@@ -43,6 +43,23 @@ class Portfolio:
         self.balance += total_proceeds
         self.shares_held = 0.0
 
+    def get_return(self) -> float:
+        """
+        Calculate the profit/loss from latest trade.
+        """
+
+        return self.balance - self.prev_balance
+
+    def get_percentage_return(self) -> float:
+        """
+        Calculate pecentage return from latest trade.
+        """
+
+        if self.prev_balance <= 0:
+            return 0.0
+
+        return (self.get_return() / self.prev_balance) * 100
+
     def update_prev_portfolio_balance(self) -> None:
         """
         Updates the previous portfolio balance.

@@ -144,7 +144,7 @@ class TradingEnv(gym.Env):
         elif action == 2:
             if self.portfolio.in_position():
                 self._sell(price=price)
-                reward = self.portfolio.balance - self.portfolio.prev_balance
+                reward = self.portfolio.get_percentage_return()
 
                 self.portfolio.update_prev_portfolio_balance()
 

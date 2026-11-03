@@ -124,7 +124,7 @@ def test_sell_without_costs(simple_df: pd.DataFrame) -> None:
 
     assert env.portfolio.shares_held == pytest.approx(0.0)
     assert env.portfolio.balance == pytest.approx(10_040.0)
-    assert reward == pytest.approx(40.0)
+    assert reward == pytest.approx(0.4)
 
 
 def test_sell_with_commission(simple_df: pd.DataFrame) -> None:
@@ -146,10 +146,12 @@ def test_sell_with_commission(simple_df: pd.DataFrame) -> None:
 
     expected_shares = 2_000 / (100 * (1 + commission))
     expected_final_balance = 10_000 - 2_000 + expected_shares * 102 * (1 - commission)
+    expected_return = expected_final_balance - 10_000
+    expected_reward = (expected_return / 10_000) * 100
 
     assert env.portfolio.shares_held == pytest.approx(0.0)
     assert env.portfolio.balance == pytest.approx(expected_final_balance, rel=1e-5)
-    assert reward == pytest.approx(expected_final_balance - 10_000, rel=1e-5)
+    assert reward == pytest.approx(expected_reward, rel=1e-5)
 
 
 def test_sell_with_slippage(simple_df: pd.DataFrame) -> None:
@@ -171,10 +173,12 @@ def test_sell_with_slippage(simple_df: pd.DataFrame) -> None:
     sell_fill = 102 * (1 - slippage)
     expected_shares = 2_000 / buy_fill
     expected_balance = 8_000 + expected_shares * sell_fill
+    expected_return = expected_balance - 10_000
+    expected_reward = (expected_return / 10_000) * 100
 
     assert env.portfolio.shares_held == pytest.approx(0.0)
     assert env.portfolio.balance == pytest.approx(expected_balance, rel=1e-5)
-    assert reward == pytest.approx(expected_balance - 10_000, rel=1e-5)
+    assert reward == pytest.approx(expected_reward, rel=1e-5)
 
 
 def test_sell_while_flat_is_rejected(simple_env: TradingEnv) -> None:
