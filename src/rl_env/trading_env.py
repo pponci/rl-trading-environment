@@ -5,12 +5,16 @@ import numpy as np
 import pandas as pd
 
 from rl_env.components.config import TradingEnvConfig
+from rl_env.components.portfolio import Portfolio
 
 
 class TradingEnv(gym.Env):
     def __init__(self, df: pd.DataFrame, cfg: TradingEnvConfig) -> None:
 
         super().__init__()
+
+        self.cfg = cfg
+        self.portfolio = Portfolio(cfg=cfg)
 
         if df.empty:
             raise ValueError("dataframe cannot be empty")
@@ -35,7 +39,6 @@ class TradingEnv(gym.Env):
         self.slippage = cfg.slippage
         self.postion_open_value = cfg.initial_balance * cfg.position_size
 
-        self.initial_balance = cfg.initial_balance
         n_portfolio_features = 3
 
         self.observation_space = gym.spaces.Box(
@@ -58,12 +61,9 @@ class TradingEnv(gym.Env):
 
         super().reset(seed=seed)
 
+        self.portfolio.reset()
+
         self.current_step = self.window_size
-
-        self.balance = self.initial_balance
-        self.shares_held = 0.0
-
-        self.prev_balance = self.initial_balance
 
         return self._get_obs(self.current_step), {}
 
@@ -74,13 +74,6 @@ class TradingEnv(gym.Env):
 
         return self.prices[current_step]
 
-    def _postion_value(self, price: float) -> float:
-        """
-        Compute estimated value of open postion.
-        """
-
-        return self.shares_held * price
-
     def _get_obs(self, current_step: int) -> np.ndarray:
         """
         Build the observation from the enviroment.
@@ -89,15 +82,17 @@ class TradingEnv(gym.Env):
         window = self.prices[current_step - self.window_size : current_step]
 
         price = self._current_price(current_step)
-        position_value = self._postion_value(price=price)
+        position_value = self.portfolio.get_position_value(price=price)
 
-        portfolio_features = np.array([self.balance, self.shares_held, position_value])
+        portfolio_features = np.array(
+            [self.portfolio.balance, self.portfolio.shares_held, position_value]
+        )
 
         return np.concatenate([window, portfolio_features]).astype(np.float32)
 
-    def _buy(self, price: float) -> None:
+    def _buy(self, price: float) -> bool:
         """
-        Open postion.
+        Open postion if possible, return the status.
         """
 
         fill_price = price * (1 + self.slippage)
@@ -106,13 +101,9 @@ class TradingEnv(gym.Env):
 
         total_cost = n_shares * fill_price * (1 + self.commission)
 
-        # to do: for now insuffucent balance fails silenttly, same as other
-        # failed operation agent should know.
-        if self.balance < total_cost:
-            return
+        buy_status = self.portfolio.open_position(n_shares=n_shares, total_cost=total_cost)
 
-        self.shares_held = n_shares
-        self.balance -= total_cost
+        return buy_status
 
     def _sell(self, price: float) -> None:
         """
@@ -120,11 +111,12 @@ class TradingEnv(gym.Env):
         """
 
         fill_price = price * (1 - self.slippage)
-        gross_proceeds = self.shares_held * fill_price
+        gross_proceeds = self.portfolio.shares_held * fill_price
         commission_cost = gross_proceeds * self.commission
 
-        self.balance += gross_proceeds - commission_cost
-        self.shares_held = 0.0
+        total_proceeds = gross_proceeds - commission_cost
+
+        self.portfolio.close_position(total_proceeds=total_proceeds)
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         """
@@ -142,18 +134,24 @@ class TradingEnv(gym.Env):
             reward = 0.0
 
         elif action == 1:
-            if self.shares_held <= 0:
-                self._buy(price=price)
-                reward = 0.0
+            if not self.portfolio.in_position():
+                buy_status = self._buy(price=price)
+
+                if buy_status:
+                    reward = 0.0
+
+                else:
+                    reward = self.invalid_action_penalty
 
             else:
                 reward = self.invalid_action_penalty
 
         elif action == 2:
-            if self.shares_held > 0:
+            if self.portfolio.in_position():
                 self._sell(price=price)
-                reward = self.balance - self.prev_balance
-                self.prev_balance = self.balance
+                reward = self.portfolio.get_percentage_return()
+
+                self.portfolio.update_prev_portfolio_balance()
 
             else:
                 reward = self.invalid_action_penalty

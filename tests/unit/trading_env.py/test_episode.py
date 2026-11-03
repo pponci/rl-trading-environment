@@ -60,9 +60,9 @@ def test_reset_after_termination(simple_env: TradingEnv) -> None:
     obs, info = simple_env.reset()
 
     assert simple_env.current_step == simple_env.window_size
-    assert simple_env.balance == pytest.approx(simple_env.initial_balance)
-    assert simple_env.shares_held == pytest.approx(0.0)
-    assert simple_env.prev_balance == pytest.approx(simple_env.initial_balance)
+    assert simple_env.portfolio.balance == pytest.approx(simple_env.cfg.initial_balance)
+    assert simple_env.portfolio.shares_held == pytest.approx(0.0)
+    assert simple_env.portfolio.prev_balance == pytest.approx(simple_env.cfg.initial_balance)
 
     np.testing.assert_allclose(obs[:2], [100, 101])
     assert isinstance(info, dict)
