@@ -12,6 +12,9 @@ class TradingEnvConfig:
 
     invalid_action_penalty: float = -10.0
 
+    close_col: str = "close"
+    time_col: str = "time"
+
     def __post_init__(self) -> None:
         if self.window_size <= 0:
             raise ValueError("window_size must be > 0")

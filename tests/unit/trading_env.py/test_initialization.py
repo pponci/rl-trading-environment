@@ -1,3 +1,4 @@
+import datetime
 from typing import cast
 
 import numpy as np
@@ -53,7 +54,14 @@ def test_prices_type_and_dtype(simple_env: TradingEnv) -> None:
 
 
 def test_no_close_column() -> None:
-    df = pd.DataFrame({"ref_close": [100, 101, 102, 99]})
+    data = [100, 101, 102, 99]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+        datetime.datetime(2026, 1, 1, 9, 33),
+    ]
+    df = pd.DataFrame({"ref_close": data, "time": times})
     cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="close column"):
@@ -61,7 +69,13 @@ def test_no_close_column() -> None:
 
 
 def test_NaN_price() -> None:
-    df = pd.DataFrame({"close": [100, 99, np.nan]})
+    data = [100, 99, np.nan]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+    ]
+    df = pd.DataFrame({"close": data, "time": times})
     cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="'close' column contains NaN values"):
@@ -69,7 +83,13 @@ def test_NaN_price() -> None:
 
 
 def test_inf_price() -> None:
-    df = pd.DataFrame({"close": [100, 99, np.inf]})
+    data = [100, 99, np.inf]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+    ]
+    df = pd.DataFrame({"close": data, "time": times})
     cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="'close' column contains non-finite values"):
@@ -77,7 +97,13 @@ def test_inf_price() -> None:
 
 
 def test_negative_price() -> None:
-    df = pd.DataFrame({"close": [100, 99, -11]})
+    data = [100, 99, -11]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+    ]
+    df = pd.DataFrame({"close": data, "time": times})
     cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="'close' column must contain strictly positive prices"):
@@ -85,7 +111,13 @@ def test_negative_price() -> None:
 
 
 def test_zero_price() -> None:
-    df = pd.DataFrame({"close": [100, 99, 0]})
+    data = [100, 99, 0]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+    ]
+    df = pd.DataFrame({"close": data, "time": times})
     cfg = TradingEnvConfig(window_size=1)
 
     with pytest.raises(ValueError, match="'close' column must contain strictly positive prices"):

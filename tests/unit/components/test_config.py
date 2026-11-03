@@ -12,6 +12,8 @@ def test_defaults_are_valid() -> None:
     assert cfg.slippage == 0.0005
     assert cfg.position_size == 0.20
     assert cfg.invalid_action_penalty == -10.0
+    assert cfg.close_col == "close"
+    assert cfg.time_col == "time"
 
 
 def test_costum_valid_values() -> None:
@@ -22,6 +24,8 @@ def test_costum_valid_values() -> None:
         slippage=0.0,
         position_size=1.0,
         invalid_action_penalty=-2,
+        close_col="ref_close",
+        time_col="ref_time",
     )
 
     assert cfg.window_size == 1
@@ -30,6 +34,8 @@ def test_costum_valid_values() -> None:
     assert cfg.slippage == 0.0
     assert cfg.position_size == 1.0
     assert cfg.invalid_action_penalty == -2
+    assert cfg.close_col == "ref_close"
+    assert cfg.time_col == "ref_time"
 
 
 @pytest.mark.parametrize("bad", [0, -1, -100])

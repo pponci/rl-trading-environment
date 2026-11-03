@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -29,9 +31,15 @@ def test_each_step_advances_one_timestep(simple_env: TradingEnv) -> None:
 def test_minimum_dataset_length_supports_one_transition() -> None:
     window_size = 3
     data = [90, 95, 98, 100]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+        datetime.datetime(2026, 1, 1, 9, 33),
+    ]
 
     cfg = TradingEnvConfig(window_size=window_size)
-    env = TradingEnv(df=pd.DataFrame({"close": data}), cfg=cfg)
+    env = TradingEnv(df=pd.DataFrame({"close": data, "time": times}), cfg=cfg)
 
     env.reset()
     obs, _, terminated, truncated, _ = env.step(0)
