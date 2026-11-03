@@ -35,9 +35,25 @@ class MarketData:
         self.df = df.reset_index(drop=True)
         self.prices = df["close"].to_numpy(dtype=np.float32)
 
+        self.length = len(self.df)
+
     def get_current_price(self, current_step: int) -> float:
         """
         Get price at step.
         """
 
         return self.prices[current_step]
+
+    def get_window(self, step: int) -> np.ndarray:
+        """
+        Calculate price window for current step.
+        """
+
+        return self.prices[step - self.cfg.window_size : step]
+
+    def finished(self, step: int) -> bool:
+        """
+        Check if dataset is finished.
+        """
+
+        return step >= self.length

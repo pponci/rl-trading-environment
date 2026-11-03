@@ -55,7 +55,7 @@ class TradingEnv(gym.Env):
         Build the observation from the enviroment.
         """
 
-        window = self.market_data.prices[current_step - self.cfg.window_size : current_step]
+        window = self.market_data.get_window(step=current_step)
 
         price = self.market_data.get_current_price(current_step)
         position_value = self.portfolio.get_position_value(price=price)
@@ -134,7 +134,7 @@ class TradingEnv(gym.Env):
 
         self.current_step += 1
 
-        terminated = self.current_step >= len(self.market_data.prices)
+        terminated = self.market_data.finished(step=self.current_step)
         truncated = False
 
         info: dict[str, Any] = {}
