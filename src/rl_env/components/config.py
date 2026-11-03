@@ -19,6 +19,8 @@ class TradingEnvConfig:
     market_close: datetime.time = datetime.time(15, 55)
     overnight_holding: bool = False
 
+    stop_loss: None | float = 0.05
+
     def __post_init__(self) -> None:
         if self.window_size <= 0:
             raise ValueError("window_size must be > 0")
@@ -34,3 +36,6 @@ class TradingEnvConfig:
 
         if not (0.0 <= self.position_size <= 1.0):
             raise ValueError("position_size must be a percentage")
+
+        if self.stop_loss and not (0.0 <= self.stop_loss <= 1.0):
+            raise ValueError("stop_loss must be a percentage")

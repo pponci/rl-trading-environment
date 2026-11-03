@@ -231,3 +231,134 @@ def test_can_trade_numpy_datetime_conversion_equivalence(
     np_dt = np.datetime64(dt)
 
     assert broker.can_trade(dt) == broker.can_trade(np_dt)
+
+
+def test_entry_price_is_zero_initially(broker: Broker) -> None:
+    assert broker.entry_price == 0.0
+
+
+def test_entry_price_set_on_successful_buy(
+    broker: Broker, portfolio: Portfolio, cfg: TradingEnvConfig
+) -> None:
+    price = 100.0
+    broker.execute_buy(price=price)
+
+    expected_fill = price * (1 + cfg.slippage)
+
+    assert broker.entry_price == pytest.approx(expected_fill)
+
+
+def test_entry_price_not_set_on_failed_buy(broker: Broker, portfolio: Portfolio) -> None:
+    portfolio.open_position(n_shares=10.0, total_cost=1_000.0)
+    broker.execute_buy(price=100.0)
+
+    assert broker.entry_price == 0.0
+
+
+def test_entry_price_cleared_on_sell(broker: Broker) -> None:
+    broker.execute_buy(price=100.0)
+
+    assert broker.entry_price >= 0.0
+
+    broker.execute_sell(price=110.0)
+
+    assert broker.entry_price == 0.0
+
+
+def test_entry_price_unchanged_on_failed_sell(broker: Broker) -> None:
+    broker.execute_buy(price=100.0)
+    entry = broker.entry_price
+
+    broker.portfolio.close_position(total_proceeds=0.0)
+    result = broker.execute_sell(price=110.0)
+
+    assert result is False
+    assert broker.entry_price == pytest.approx(entry)
+
+
+def test_stop_loss_hit_false_when_not_in_position(broker: Broker) -> None:
+    broker.entry_price = 100.0
+    assert broker.stop_loss_hit(price=1.0) is False
+
+
+def test_stop_loss_hit_false_when_stop_loss_is_none(
+    cfg: TradingEnvConfig, portfolio: Portfolio
+) -> None:
+    cfg.stop_loss = None
+    b = Broker(cfg, portfolio)
+    b.execute_buy(price=100.0)
+
+    assert b.stop_loss_hit(price=1.0) is False
+
+
+def test_stop_loss_hit_false_above_threshold(cfg: TradingEnvConfig, portfolio: Portfolio) -> None:
+    cfg.stop_loss = 0.05
+    b = Broker(cfg, portfolio)
+    b.execute_buy(price=100.0)
+
+    threshold = b.entry_price * (1 - 0.05)
+    assert b.stop_loss_hit(price=threshold + 0.01) is False
+
+
+def test_stop_loss_hit_true_exactly_at_threshold(
+    cfg: TradingEnvConfig, portfolio: Portfolio
+) -> None:
+    cfg.stop_loss = 0.05
+    b = Broker(cfg, portfolio)
+    b.execute_buy(price=100.0)
+
+    threshold = b.entry_price * (1 - 0.05)
+
+    assert b.stop_loss_hit(price=threshold) is True
+
+
+def test_stop_loss_hit_true_below_threshold(cfg: TradingEnvConfig, portfolio: Portfolio) -> None:
+    cfg.stop_loss = 0.05
+    b = Broker(cfg, portfolio)
+    b.execute_buy(price=100.0)
+
+    threshold = b.entry_price * (1 - 0.05)
+
+    assert b.stop_loss_hit(price=threshold - 0.01) is True
+
+
+def test_stop_loss_hit_false_at_entry_price(cfg: TradingEnvConfig, portfolio: Portfolio) -> None:
+    cfg.stop_loss = 0.10
+    b = Broker(cfg, portfolio)
+    b.execute_buy(price=100.0)
+
+    assert b.stop_loss_hit(price=b.entry_price) is False
+
+
+def test_stop_loss_hit_uses_fill_price_not_raw_price(
+    cfg: TradingEnvConfig, portfolio: Portfolio
+) -> None:
+    cfg.slippage = 0.02
+    cfg.stop_loss = 0.05
+    b = Broker(cfg, portfolio)
+    raw_price = 100.0
+    b.execute_buy(price=raw_price)
+
+    assert b.stop_loss_hit(price=96.5) is True
+    assert b.stop_loss_hit(price=97.0) is False
+
+
+def test_stop_loss_hit_resets_after_sell_then_new_buy(
+    cfg: TradingEnvConfig, portfolio: Portfolio
+) -> None:
+    cfg.stop_loss = 0.10
+    b = Broker(cfg, portfolio)
+
+    b.execute_buy(price=200.0)
+    first_entry = b.entry_price
+    b.execute_sell(price=200.0)
+
+    assert b.entry_price == 0.0
+
+    b.execute_buy(price=100.0)
+    second_entry = b.entry_price
+
+    assert second_entry == pytest.approx(100.0 * (1 + cfg.slippage))
+    assert second_entry != pytest.approx(first_entry)
+    assert b.stop_loss_hit(price=150.0) is False
+    assert b.stop_loss_hit(price=second_entry * 0.90) is True

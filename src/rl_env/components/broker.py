@@ -14,6 +14,8 @@ class Broker:
 
         self.position_open_value = cfg.initial_balance * cfg.position_size
 
+        self.entry_price = 0.0
+
     def execute_buy(self, price: float) -> bool:
         """
         Open position at broker level.
@@ -27,6 +29,8 @@ class Broker:
         total_cost = n_shares * fill_price * (1 + self.cfg.commission)
 
         buy_status = self.portfolio.open_position(n_shares=n_shares, total_cost=total_cost)
+
+        self.entry_price = fill_price
 
         return buy_status
 
@@ -46,6 +50,8 @@ class Broker:
 
         self.portfolio.close_position(total_proceeds=total_proceeds)
 
+        self.entry_price = 0.0
+
         return True
 
     def can_trade(self, time: datetime.datetime | np.datetime64) -> bool:
@@ -63,3 +69,18 @@ class Broker:
             )
 
         return time.time() < self.cfg.market_close
+
+    def stop_loss_hit(self, price: float) -> bool:
+        """
+        Check if open position hits stop loss.
+        """
+
+        if not self.portfolio.in_position():
+            return False
+
+        stop_loss = self.cfg.stop_loss
+
+        if stop_loss is None:
+            return False
+
+        return price <= self.entry_price * (1 - stop_loss)

@@ -14,6 +14,7 @@ def test_defaults_are_valid() -> None:
     assert cfg.invalid_action_penalty == -10.0
     assert cfg.close_col == "close"
     assert cfg.time_col == "time"
+    assert cfg.stop_loss == 0.05
 
 
 def test_costum_valid_values() -> None:
@@ -26,6 +27,7 @@ def test_costum_valid_values() -> None:
         invalid_action_penalty=-2,
         close_col="ref_close",
         time_col="ref_time",
+        stop_loss=None,
     )
 
     assert cfg.window_size == 1
@@ -36,6 +38,7 @@ def test_costum_valid_values() -> None:
     assert cfg.invalid_action_penalty == -2
     assert cfg.close_col == "ref_close"
     assert cfg.time_col == "ref_time"
+    assert cfg.stop_loss is None
 
 
 @pytest.mark.parametrize("bad", [0, -1, -100])
@@ -113,3 +116,22 @@ def test_position_size_accept_typical_value() -> None:
     cfg = TradingEnvConfig(position_size=0.5)
 
     assert cfg.position_size == 0.5
+
+
+@pytest.mark.parametrize("bad", [-0.01, -1.0, 1.01, 2.0, 100.0])
+def test_stop_loss_reject_out_of_range(bad: float) -> None:
+    with pytest.raises(ValueError, match="stop_loss"):
+        TradingEnvConfig(stop_loss=bad)
+
+
+@pytest.mark.parametrize("boundary", [0.0, 1.0])
+def test_stop_loss_accept_inclusive_boundaries(boundary: float) -> None:
+    cfg = TradingEnvConfig(stop_loss=boundary)
+
+    assert cfg.stop_loss == boundary
+
+
+def test_stop_loss_accept_typical_value() -> None:
+    cfg = TradingEnvConfig(stop_loss=0.5)
+
+    assert cfg.stop_loss == 0.5

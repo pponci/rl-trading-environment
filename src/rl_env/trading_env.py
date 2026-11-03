@@ -76,35 +76,36 @@ class TradingEnv(gym.Env):
         time = self.market_data.get_time(step=self.current_step)
 
         reward = 0.0
+        forced_exit = False
 
-        if not self.broker.can_trade(time=time):
-            sell_status = self.broker.execute_sell(price=price)
-
-            if sell_status:
+        if not self.broker.can_trade(time=time) or self.broker.stop_loss_hit(price=price):
+            if self.broker.execute_sell(price=price):
                 reward = self.portfolio.get_percentage_return()
                 self.portfolio.update_prev_portfolio_balance()
+                forced_exit = True
 
-        if action == 0:
-            reward = 0.0
-
-        elif action == 1:
-            buy_status = self.broker.execute_buy(price=price)
-
-            if buy_status:
+        if not forced_exit:
+            if action == 0:
                 reward = 0.0
 
-            else:
-                reward = self.invalid_action_penalty
+            elif action == 1:
+                buy_status = self.broker.execute_buy(price=price)
 
-        elif action == 2:
-            sell_status = self.broker.execute_sell(price=price)
+                if buy_status:
+                    reward = 0.0
 
-            if sell_status:
-                reward = self.portfolio.get_percentage_return()
-                self.portfolio.update_prev_portfolio_balance()
+                else:
+                    reward = self.invalid_action_penalty
 
-            else:
-                reward = self.invalid_action_penalty
+            elif action == 2:
+                sell_status = self.broker.execute_sell(price=price)
+
+                if sell_status:
+                    reward = self.portfolio.get_percentage_return()
+                    self.portfolio.update_prev_portfolio_balance()
+
+                else:
+                    reward = self.invalid_action_penalty
 
         self.current_step += 1
 
