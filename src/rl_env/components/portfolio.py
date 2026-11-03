@@ -24,16 +24,18 @@ class Portfolio:
 
         return self.shares_held * price
 
-    def open_position(self, n_shares: float, total_cost: float) -> None:
+    def open_position(self, n_shares: float, total_cost: float) -> bool:
         """
         Open the position at the portfolio level.
         """
 
         if self.balance < total_cost:
-            return
+            return False
 
         self.shares_held = n_shares
         self.balance -= total_cost
+
+        return True
 
     def close_position(self, total_proceeds: float) -> None:
         """

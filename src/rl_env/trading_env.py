@@ -90,9 +90,9 @@ class TradingEnv(gym.Env):
 
         return np.concatenate([window, portfolio_features]).astype(np.float32)
 
-    def _buy(self, price: float) -> None:
+    def _buy(self, price: float) -> bool:
         """
-        Open postion.
+        Open postion if possible, return the status.
         """
 
         fill_price = price * (1 + self.slippage)
@@ -101,9 +101,9 @@ class TradingEnv(gym.Env):
 
         total_cost = n_shares * fill_price * (1 + self.commission)
 
-        # to do: for now insuffucent balance fails silenttly, same as other
-        # failed operation agent should know.
-        self.portfolio.open_position(n_shares=n_shares, total_cost=total_cost)
+        buy_status = self.portfolio.open_position(n_shares=n_shares, total_cost=total_cost)
+
+        return buy_status
 
     def _sell(self, price: float) -> None:
         """
@@ -135,8 +135,13 @@ class TradingEnv(gym.Env):
 
         elif action == 1:
             if not self.portfolio.in_position():
-                self._buy(price=price)
-                reward = 0.0
+                buy_status = self._buy(price=price)
+
+                if buy_status:
+                    reward = 0.0
+
+                else:
+                    reward = self.invalid_action_penalty
 
             else:
                 reward = self.invalid_action_penalty

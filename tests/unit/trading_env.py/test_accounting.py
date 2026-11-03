@@ -93,7 +93,7 @@ def test_unaffordable_buy_does_not_change_portfolio(simple_df: pd.DataFrame) -> 
 
     assert env.portfolio.balance == pytest.approx(balance_before)
     assert env.portfolio.shares_held == pytest.approx(shares_before)
-    assert reward == pytest.approx(0.0)
+    assert reward == pytest.approx(env.invalid_action_penalty)
 
 
 def test_buy_while_holding_is_rejected(simple_env: TradingEnv) -> None:
