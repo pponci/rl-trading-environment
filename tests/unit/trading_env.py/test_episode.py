@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,8 +11,8 @@ from rl_env.trading_env import TradingEnv
 def test_reset_starts_at_window_size(simple_env: TradingEnv) -> None:
     obs, _ = simple_env.reset()
 
-    assert simple_env.current_step == simple_env.window_size
-    np.testing.assert_allclose(obs[:2], [100, 101])
+    assert simple_env.current_step == simple_env.cfg.window_size
+    np.testing.assert_allclose(obs[:2], [100 / 101 - 1, 0.0], rtol=1e-6, atol=1e-6)
     assert obs[2] == pytest.approx(10_000.0)
     assert obs[3] == pytest.approx(0.0)
     assert obs[4] == pytest.approx(0.0)
@@ -29,9 +31,15 @@ def test_each_step_advances_one_timestep(simple_env: TradingEnv) -> None:
 def test_minimum_dataset_length_supports_one_transition() -> None:
     window_size = 3
     data = [90, 95, 98, 100]
+    times = [
+        datetime.datetime(2026, 1, 1, 9, 30),
+        datetime.datetime(2026, 1, 1, 9, 31),
+        datetime.datetime(2026, 1, 1, 9, 32),
+        datetime.datetime(2026, 1, 1, 9, 33),
+    ]
 
     cfg = TradingEnvConfig(window_size=window_size)
-    env = TradingEnv(df=pd.DataFrame({"close": data}), cfg=cfg)
+    env = TradingEnv(df=pd.DataFrame({"close": data, "time": times}), cfg=cfg)
 
     env.reset()
     obs, _, terminated, truncated, _ = env.step(0)
@@ -59,12 +67,12 @@ def test_reset_after_termination(simple_env: TradingEnv) -> None:
 
     obs, info = simple_env.reset()
 
-    assert simple_env.current_step == simple_env.window_size
+    assert simple_env.current_step == simple_env.cfg.window_size
     assert simple_env.portfolio.balance == pytest.approx(simple_env.cfg.initial_balance)
     assert simple_env.portfolio.shares_held == pytest.approx(0.0)
     assert simple_env.portfolio.prev_balance == pytest.approx(simple_env.cfg.initial_balance)
 
-    np.testing.assert_allclose(obs[:2], [100, 101])
+    np.testing.assert_allclose(obs[:2], [100 / 101 - 1, 0.0], rtol=1e-6, atol=1e-6)
     assert isinstance(info, dict)
 
 
@@ -80,7 +88,7 @@ def test_terminal_observation_is_valid(simple_env: TradingEnv) -> None:
 
     assert not truncated
     assert final_obs is not None
-    assert final_obs.shape == (simple_env.window_size + 3,)
+    assert final_obs.shape == (simple_env.cfg.window_size + 3,)
     assert simple_env.observation_space.contains(final_obs)
 
 

@@ -50,16 +50,15 @@ def test_window_size_plus_two(simple_df: pd.DataFrame) -> None:
 
 def test_initial_price_window(simple_env: TradingEnv, simple_df: pd.DataFrame) -> None:
     obs, _ = simple_env.reset()
-    prices = simple_df["close"].to_numpy().astype(np.float32)
 
-    np.testing.assert_array_equal(obs[:2], prices[:2])
+    np.testing.assert_allclose(obs[:2], [100 / 101 - 1, 0.0], rtol=1e-6, atol=1e-6)
 
 
 def test_observation_after_buy(simple_env: TradingEnv) -> None:
     simple_env.reset()
     obs, _, _, _, _ = simple_env.step(1)
 
-    np.testing.assert_allclose(obs[:2], [101, 100])
+    np.testing.assert_allclose(obs[:2], [101 / 100 - 1, 0.0], rtol=1e-6, atol=1e-6)
     assert obs[-3] == pytest.approx(8_000.0)
     assert obs[-2] == pytest.approx(19.97003555, rel=1e-4)
     assert obs[-1] == pytest.approx(2_036.94362, rel=1e-4)
@@ -69,5 +68,5 @@ def test_observation_window_advances(simple_env: TradingEnv) -> None:
     simple_env.reset()
     obs, _, _, _, _ = simple_env.step(0)
 
-    np.testing.assert_allclose(obs[:2], [101, 100])
+    np.testing.assert_allclose(obs[:2], [101 / 100 - 1, 0.0], rtol=1e-6, atol=1e-6)
     assert simple_env.observation_space.contains(obs)
