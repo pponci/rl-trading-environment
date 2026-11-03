@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 
 
@@ -14,6 +15,9 @@ class TradingEnvConfig:
 
     close_col: str = "close"
     time_col: str = "time"
+
+    market_close: datetime.time = datetime.time(15, 55)
+    overnight_holding: bool = False
 
     def __post_init__(self) -> None:
         if self.window_size <= 0:

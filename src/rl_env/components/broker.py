@@ -1,3 +1,8 @@
+import datetime
+from typing import cast
+
+import numpy as np
+
 from rl_env.components.config import TradingEnvConfig
 from rl_env.components.portfolio import Portfolio
 
@@ -42,3 +47,19 @@ class Broker:
         self.portfolio.close_position(total_proceeds=total_proceeds)
 
         return True
+
+    def can_trade(self, time: datetime.datetime | np.datetime64) -> bool:
+        """
+        Check if agent is still allowed to trade.
+        """
+
+        if self.cfg.overnight_holding:
+            return True
+
+        if isinstance(time, np.datetime64):
+            time = cast(
+                datetime.datetime,
+                time.astype("datetime64[us]").astype(datetime.datetime),
+            )
+
+        return time.time() < self.cfg.market_close

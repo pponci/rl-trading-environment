@@ -73,8 +73,16 @@ class TradingEnv(gym.Env):
             raise ValueError(f"invalid action {action!r}, expected 0, 1, 2")
 
         price = self.market_data.get_current_price(self.current_step)
+        time = self.market_data.get_time(step=self.current_step)
 
         reward = 0.0
+
+        if not self.broker.can_trade(time=time):
+            sell_status = self.broker.execute_sell(price=price)
+
+            if sell_status:
+                reward = self.portfolio.get_percentage_return()
+                self.portfolio.update_prev_portfolio_balance()
 
         if action == 0:
             reward = 0.0
