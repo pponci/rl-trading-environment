@@ -48,8 +48,8 @@ def test_invalid_action_penalty_value(simple_env: TradingEnv) -> None:
 def test_prices_type_and_dtype(simple_env: TradingEnv) -> None:
     obs, info = simple_env.reset()
 
-    assert isinstance(simple_env.prices, np.ndarray)
-    assert simple_env.prices.dtype == np.float32
+    assert isinstance(simple_env.market_data.prices, np.ndarray)
+    assert simple_env.market_data.prices.dtype == np.float32
 
 
 def test_no_close_column() -> None:
@@ -64,7 +64,7 @@ def test_NaN_price() -> None:
     df = pd.DataFrame({"close": [100, 99, np.nan]})
     cfg = TradingEnvConfig(window_size=1)
 
-    with pytest.raises(ValueError, match="invalid prices"):
+    with pytest.raises(ValueError, match="'close' column contains NaN values"):
         TradingEnv(df=df, cfg=cfg)
 
 
@@ -72,7 +72,7 @@ def test_inf_price() -> None:
     df = pd.DataFrame({"close": [100, 99, np.inf]})
     cfg = TradingEnvConfig(window_size=1)
 
-    with pytest.raises(ValueError, match="invalid prices"):
+    with pytest.raises(ValueError, match="'close' column contains non-finite values"):
         TradingEnv(df=df, cfg=cfg)
 
 
@@ -80,7 +80,7 @@ def test_negative_price() -> None:
     df = pd.DataFrame({"close": [100, 99, -11]})
     cfg = TradingEnvConfig(window_size=1)
 
-    with pytest.raises(ValueError, match="invalid prices"):
+    with pytest.raises(ValueError, match="'close' column must contain strictly positive prices"):
         TradingEnv(df=df, cfg=cfg)
 
 
@@ -88,7 +88,7 @@ def test_zero_price() -> None:
     df = pd.DataFrame({"close": [100, 99, 0]})
     cfg = TradingEnvConfig(window_size=1)
 
-    with pytest.raises(ValueError, match="invalid prices"):
+    with pytest.raises(ValueError, match="'close' column must contain strictly positive prices"):
         TradingEnv(df=df, cfg=cfg)
 
 

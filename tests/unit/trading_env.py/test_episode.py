@@ -9,7 +9,7 @@ from rl_env.trading_env import TradingEnv
 def test_reset_starts_at_window_size(simple_env: TradingEnv) -> None:
     obs, _ = simple_env.reset()
 
-    assert simple_env.current_step == simple_env.window_size
+    assert simple_env.current_step == simple_env.cfg.window_size
     np.testing.assert_allclose(obs[:2], [100, 101])
     assert obs[2] == pytest.approx(10_000.0)
     assert obs[3] == pytest.approx(0.0)
@@ -59,7 +59,7 @@ def test_reset_after_termination(simple_env: TradingEnv) -> None:
 
     obs, info = simple_env.reset()
 
-    assert simple_env.current_step == simple_env.window_size
+    assert simple_env.current_step == simple_env.cfg.window_size
     assert simple_env.portfolio.balance == pytest.approx(simple_env.cfg.initial_balance)
     assert simple_env.portfolio.shares_held == pytest.approx(0.0)
     assert simple_env.portfolio.prev_balance == pytest.approx(simple_env.cfg.initial_balance)
@@ -80,7 +80,7 @@ def test_terminal_observation_is_valid(simple_env: TradingEnv) -> None:
 
     assert not truncated
     assert final_obs is not None
-    assert final_obs.shape == (simple_env.window_size + 3,)
+    assert final_obs.shape == (simple_env.cfg.window_size + 3,)
     assert simple_env.observation_space.contains(final_obs)
 
 

@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from rl_env.components.config import TradingEnvConfig
+from rl_env.components.market_data import MarketData
 from rl_env.components.portfolio import Portfolio
 
 
@@ -15,25 +16,7 @@ class TradingEnv(gym.Env):
 
         self.cfg = cfg
         self.portfolio = Portfolio(cfg=cfg)
-
-        if df.empty:
-            raise ValueError("dataframe cannot be empty")
-
-        if "close" not in df.columns:
-            raise ValueError("close column is required.")
-
-        if cfg.window_size >= len(df):
-            raise ValueError(
-                f"window_size : {cfg.window_size} musst be a smaller number than",
-                f"the lenght of the dataset : {len(df)}",
-            )
-
-        self.df = df.reset_index(drop=True)
-        self.window_size = cfg.window_size
-        self.prices = df["close"].to_numpy(dtype=np.float32)
-
-        if not np.all(np.isfinite(self.prices)) or np.any(self.prices <= 0):
-            raise ValueError("invalid prices present in the dataset")
+        self.market_data = MarketData(df=df, cfg=cfg)
 
         self.commission = cfg.commission
         self.slippage = cfg.slippage
@@ -63,25 +46,18 @@ class TradingEnv(gym.Env):
 
         self.portfolio.reset()
 
-        self.current_step = self.window_size
+        self.current_step = self.cfg.window_size
 
         return self._get_obs(self.current_step), {}
-
-    def _current_price(self, current_step: int) -> float:
-        """
-        Get price at step.
-        """
-
-        return self.prices[current_step]
 
     def _get_obs(self, current_step: int) -> np.ndarray:
         """
         Build the observation from the enviroment.
         """
 
-        window = self.prices[current_step - self.window_size : current_step]
+        window = self.market_data.prices[current_step - self.cfg.window_size : current_step]
 
-        price = self._current_price(current_step)
+        price = self.market_data.get_current_price(current_step)
         position_value = self.portfolio.get_position_value(price=price)
 
         portfolio_features = np.array(
@@ -126,7 +102,7 @@ class TradingEnv(gym.Env):
         if not self.action_space.contains(action):
             raise ValueError(f"invalid action {action!r}, expected 0, 1, 2")
 
-        price = self._current_price(self.current_step)
+        price = self.market_data.get_current_price(self.current_step)
 
         reward = 0.0
 
@@ -158,11 +134,11 @@ class TradingEnv(gym.Env):
 
         self.current_step += 1
 
-        terminated = self.current_step >= len(self.prices)
+        terminated = self.current_step >= len(self.market_data.prices)
         truncated = False
 
         info: dict[str, Any] = {}
 
-        obs_step = min(self.current_step, len(self.prices) - 1)
+        obs_step = min(self.current_step, len(self.market_data.prices) - 1)
 
         return self._get_obs(obs_step), reward, terminated, truncated, info
